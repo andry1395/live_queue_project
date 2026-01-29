@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Администрирование — живая очередь</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Панель администратора</h1>
+      <p>Контроль статистики по всем подразделениям и экспорт данных.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="login-section" class="card">
+      <h2>Вход</h2>
+      <form id="login-form" class="grid columns-2">
+        <div>
+          <label for="username">Логин</label>
+          <input id="username" type="text" required />
+        </div>
+        <div>
+          <label for="password">Пароль</label>
+          <input id="password" type="password" required />
+        </div>
+        <div class="actions">
+          <button type="submit">Войти</button>
+          <a class="button-link ghost" href="index.html">Вернуться на главную</a>
+        </div>
+      </form>
+      <div id="login-notice" class="notice hidden"></div>
+    </section>
+
+    <section id="dashboard" class="card hidden">
+      <div class="grid columns-2">
+        <div>
+          <h2>Сводка</h2>
+          <p>Актуальные метрики по обращениям клиентов.</p>
+        </div>
+        <div class="actions" style="justify-content: flex-end;">
+          <button id="export-btn">Экспорт в Excel (CSV)</button>
+          <button id="logout-btn" class="secondary">Выйти</button>
+        </div>
+      </div>
+
+      <div id="stats" class="grid columns-3"></div>
+
+      <h3>По подразделениям</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Подразделение</th>
+            <th>Всего</th>
+            <th>Обслужены</th>
+            <th>Не обслужены</th>
+          </tr>
+        </thead>
+        <tbody id="department-stats"></tbody>
+      </table>
+
+      <h3>Причины отказа</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Причина</th>
+            <th>Кол-во</th>
+          </tr>
+        </thead>
+        <tbody id="reason-stats"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>Для изменения логина/пароля отредактируйте файл <code>js/data.js</code>.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
