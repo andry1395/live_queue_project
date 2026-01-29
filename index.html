@@ -18,9 +18,10 @@
     <section class="card">
       <h2>Выберите подразделение</h2>
       <p>Каждое подразделение ведет собственную страницу учета. Заполняйте форму после каждого обращения клиента.</p>
-      <div class="actions" style="margin-bottom: 16px;">
-        <button id="add-department-btn" class="ghost" type="button">Добавить подразделение</button>
-      </div>
+      <form id="add-department-form" class="actions" style="margin-bottom: 16px;">
+        <input id="new-department-name" type="text" placeholder="Новое подразделение" required />
+        <button id="add-department-btn" class="ghost" type="submit">Добавить подразделение</button>
+      </form>
       <div id="department-list" class="grid columns-3"></div>
     </section>
 
@@ -45,7 +46,7 @@
           <ul>
             <li>Причина отказа в обслуживании.</li>
             <li>Комментарий, если причина нестандартная.</li>
-            <li>История записей сохраняется локально (localStorage).</li>
+            <li>Данные сохраняются в Google Sheets через Apps Script.</li>
           </ul>
         </div>
       </div>

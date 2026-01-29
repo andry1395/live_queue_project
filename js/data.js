@@ -6,63 +6,62 @@ const DEFAULT_DEPARTMENTS = [
   { id: 'solntsevo', name: 'Солнцево' },
 ];
 
-const STORAGE_KEY = 'liveQueueRecords';
-const DEPARTMENTS_KEY = 'liveQueueDepartments';
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbxlKIXiqDsL2dx-Kq7gsMZPvDMZv_b_N8POfNP-l88u8s8XMWUo1sKhn7fi6VS_sUZg/exec';
 
 const LOGIN_CREDENTIALS = {
   username: 'admin',
   password: 'admin123',
 };
 
-const getDepartments = () => {
-  const raw = localStorage.getItem(DEPARTMENTS_KEY);
-  if (!raw) return [...DEFAULT_DEPARTMENTS];
+const sendRequest = async (payload, options = {}) => {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    ...options,
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+const getDepartments = async () => {
   try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [...DEFAULT_DEPARTMENTS];
-    return [...DEFAULT_DEPARTMENTS, ...parsed];
+    const response = await fetch(`${API_URL}?action=departments`);
+    if (!response.ok) throw new Error('Не удалось получить подразделения.');
+    const data = await response.json();
+    if (!Array.isArray(data.departments)) return [...DEFAULT_DEPARTMENTS];
+    return data.departments;
   } catch (error) {
-    console.warn('Не удалось прочитать список подразделений.', error);
+    console.warn('Не удалось получить подразделения из API.', error);
     return [...DEFAULT_DEPARTMENTS];
   }
 };
 
-const saveCustomDepartments = (departments) => {
-  localStorage.setItem(DEPARTMENTS_KEY, JSON.stringify(departments));
-};
-
-const addDepartment = (name) => {
+const addDepartment = async (name) => {
   const trimmed = name.trim();
   if (!trimmed) return null;
-  const slug = trimmed
-    .toLowerCase()
-    .replace(/[^a-zа-яё0-9]+/gi, '-')
-    .replace(/(^-|-$)/g, '');
-  const id = `${slug}-${Date.now()}`;
-  const newDepartment = { id, name: trimmed };
-  const existingCustom = getDepartments().filter(
-    (department) => !DEFAULT_DEPARTMENTS.some((item) => item.id === department.id)
-  );
-  existingCustom.push(newDepartment);
-  saveCustomDepartments(existingCustom);
-  return newDepartment;
+  const result = await sendRequest({ action: 'addDepartment', name: trimmed });
+  return result.department ?? null;
 };
 
-const getRecords = () => {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
+const getRecords = async () => {
   try {
-    return JSON.parse(raw);
+    const response = await fetch(`${API_URL}?action=records`);
+    if (!response.ok) throw new Error('Не удалось получить записи.');
+    const data = await response.json();
+    return Array.isArray(data.records) ? data.records : [];
   } catch (error) {
-    console.warn('Не удалось прочитать локальные данные.', error);
+    console.warn('Не удалось получить записи из API.', error);
     return [];
   }
 };
 
-const saveRecord = (record) => {
-  const records = getRecords();
-  records.push(record);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+const saveRecord = async (record) => {
+  const result = await sendRequest({ action: 'addRecord', record });
+  return result.record ?? null;
 };
 
 const formatDateTime = (value) => {

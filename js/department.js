@@ -13,16 +13,7 @@ const recentEntries = document.querySelector('#recent-entries');
 
 const params = new URLSearchParams(window.location.search);
 const departmentId = params.get('dept');
-const department = getDepartments().find((item) => item.id === departmentId);
-
-if (!department) {
-  departmentTitle.textContent = 'Подразделение не найдено';
-  form.classList.add('hidden');
-  formNotice.textContent = 'Проверьте ссылку на подразделение.';
-  formNotice.classList.remove('hidden');
-} else {
-  departmentTitle.textContent = department.name;
-}
+let department = null;
 
 const updateReasonVisibility = () => {
   const status = serviceStatusInput.value;
@@ -49,8 +40,9 @@ const updateReasonVisibility = () => {
 serviceStatusInput.addEventListener('change', updateReasonVisibility);
 reasonInput.addEventListener('change', updateReasonVisibility);
 
-const renderRecentEntries = () => {
-  const records = getRecords()
+const renderRecentEntries = async () => {
+  recentEntries.innerHTML = '<tr><td colspan="5">Загрузка...</td></tr>';
+  const records = (await getRecords())
     .filter((record) => record.departmentId === departmentId)
     .slice(-5)
     .reverse();
@@ -83,7 +75,7 @@ const showNotice = (message, type = 'success') => {
   formNotice.classList.add(type === 'warning' ? 'warning' : 'success');
 };
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   if (!department) return;
@@ -101,13 +93,34 @@ form.addEventListener('submit', (event) => {
     createdAt: new Date().toISOString(),
   };
 
-  saveRecord(record);
-  form.reset();
-  updateReasonVisibility();
-  renderRecentEntries();
-  showNotice('Запись сохранена. Спасибо!');
+  try {
+    await saveRecord(record);
+    form.reset();
+    updateReasonVisibility();
+    await renderRecentEntries();
+    showNotice('Запись сохранена. Спасибо!');
+  } catch (error) {
+    console.error(error);
+    showNotice('Не удалось сохранить запись. Проверьте соединение.', 'warning');
+  }
 });
 
-visitDateInput.value = new Date().toISOString().slice(0, 16);
-updateReasonVisibility();
-renderRecentEntries();
+const init = async () => {
+  const departments = await getDepartments();
+  department = departments.find((item) => item.id === departmentId);
+
+  if (!department) {
+    departmentTitle.textContent = 'Подразделение не найдено';
+    form.classList.add('hidden');
+    formNotice.textContent = 'Проверьте ссылку на подразделение.';
+    formNotice.classList.remove('hidden');
+    return;
+  }
+
+  departmentTitle.textContent = department.name;
+  visitDateInput.value = new Date().toISOString().slice(0, 16);
+  updateReasonVisibility();
+  await renderRecentEntries();
+};
+
+init();
