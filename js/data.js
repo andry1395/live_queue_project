@@ -1,9 +1,9 @@
 const DEPARTMENTS = [
-  { id: 'branch-1', name: 'Подразделение 1 (Север)' },
-  { id: 'branch-2', name: 'Подразделение 2 (Юг)' },
-  { id: 'branch-3', name: 'Подразделение 3 (Восток)' },
-  { id: 'branch-4', name: 'Подразделение 4 (Запад)' },
-  { id: 'branch-5', name: 'Подразделение 5 (Центр)' },
+  { id: 'branch-1', name: 'Мневники' },
+  { id: 'branch-2', name: 'Куркино' },
+  { id: 'branch-3', name: 'Прошлякова' },
+  { id: 'branch-4', name: 'Кирова' },
+  { id: 'branch-5', name: 'Солнцево' },
 ];
 
 const STORAGE_KEY = 'liveQueueRecords';
