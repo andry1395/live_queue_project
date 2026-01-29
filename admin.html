@@ -73,10 +73,24 @@
       </table>
 
       <h3>Подразделения</h3>
+      <form id="add-department-form" class="grid columns-3">
+        <div>
+          <label for="new-department-name">Название подразделения</label>
+          <input id="new-department-name" type="text" required />
+        </div>
+        <div>
+          <label for="new-department-pin">PIN-код (4 цифры)</label>
+          <input id="new-department-pin" type="password" inputmode="numeric" maxlength="4" required />
+        </div>
+        <div class="actions">
+          <button type="submit">Добавить подразделение</button>
+        </div>
+      </form>
       <table class="table">
         <thead>
           <tr>
             <th>Название</th>
+            <th>PIN</th>
             <th>Действия</th>
           </tr>
         </thead>

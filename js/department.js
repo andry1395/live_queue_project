@@ -10,6 +10,12 @@ const commentWrapper = document.querySelector('#comment-wrapper');
 const commentInput = document.querySelector('#comment');
 const formNotice = document.querySelector('#form-notice');
 const recentEntries = document.querySelector('#recent-entries');
+const pinSection = document.querySelector('#pin-section');
+const pinForm = document.querySelector('#pin-form');
+const pinInput = document.querySelector('#pin-input');
+const pinNotice = document.querySelector('#pin-notice');
+const formSection = document.querySelector('#form-section');
+const recentSection = document.querySelector('#recent-section');
 
 const params = new URLSearchParams(window.location.search);
 const departmentId = params.get('dept');
@@ -74,6 +80,18 @@ const showNotice = (message, type = 'success') => {
   formNotice.classList.add(type === 'warning' ? 'warning' : 'success');
 };
 
+const showPinNotice = (message, type = 'warning') => {
+  pinNotice.textContent = message;
+  pinNotice.classList.remove('hidden', 'success', 'warning');
+  pinNotice.classList.add(type === 'success' ? 'success' : 'warning');
+};
+
+const unlockDepartment = () => {
+  pinSection.classList.add('hidden');
+  formSection.classList.remove('hidden');
+  recentSection.classList.remove('hidden');
+};
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -114,7 +132,24 @@ const init = async () => {
   departmentTitle.textContent = department.name;
   visitDateInput.value = new Date().toISOString().slice(0, 16);
   updateReasonVisibility();
-  await renderRecentEntries();
+
+  if (!department.pin) {
+    showPinNotice('PIN-код не установлен. Обратитесь к администратору.');
+    return;
+  }
+
+  pinForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const pin = pinInput.value.trim();
+    if (pin === department.pin) {
+      showPinNotice('PIN принят.', 'success');
+      unlockDepartment();
+      await renderRecentEntries();
+    } else {
+      showPinNotice('Неверный PIN-код.');
+      pinInput.value = '';
+    }
+  });
 };
 
 init();

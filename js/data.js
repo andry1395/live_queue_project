@@ -1,9 +1,9 @@
 const DEFAULT_DEPARTMENTS = [
-  { id: 'mnevniki', name: 'Мнёвники' },
-  { id: 'proshlyakova', name: 'Прошлякова' },
-  { id: 'kurkino', name: 'Куркино' },
-  { id: 'kirova', name: 'Кирова' },
-  { id: 'solntsevo', name: 'Солнцево' },
+  { id: 'mnevniki', name: 'Мнёвники', pin: '0000' },
+  { id: 'proshlyakova', name: 'Прошлякова', pin: '0000' },
+  { id: 'kurkino', name: 'Куркино', pin: '0000' },
+  { id: 'kirova', name: 'Кирова', pin: '0000' },
+  { id: 'solntsevo', name: 'Солнцево', pin: '0000' },
 ];
 
 const STORAGE_KEY = 'liveQueueRecords';
@@ -76,7 +76,7 @@ const saveCustomDepartments = (departments) => {
   localStorage.setItem(DEPARTMENTS_KEY, JSON.stringify(departments));
 };
 
-const addDepartment = async (name) => {
+const addDepartment = async (name, pin) => {
   const trimmed = name.trim();
   if (!trimmed) return null;
   const slug = trimmed
@@ -84,7 +84,7 @@ const addDepartment = async (name) => {
     .replace(/[^a-zа-яё0-9]+/gi, '-')
     .replace(/(^-|-$)/g, '');
   const id = `${slug}-${Date.now()}`;
-  const newDepartment = { id, name: trimmed };
+  const newDepartment = { id, name: trimmed, pin };
 
   if (hasRemoteDb()) {
     await window.firebaseDb.collection(DEPARTMENTS_COLLECTION).doc(id).set(newDepartment);

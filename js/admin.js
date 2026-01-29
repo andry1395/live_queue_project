@@ -7,6 +7,9 @@ const departmentStatsBody = document.querySelector('#department-stats');
 const reasonStatsBody = document.querySelector('#reason-stats');
 const departmentAdminList = document.querySelector('#department-admin-list');
 const recordAdminList = document.querySelector('#record-admin-list');
+const addDepartmentForm = document.querySelector('#add-department-form');
+const newDepartmentNameInput = document.querySelector('#new-department-name');
+const newDepartmentPinInput = document.querySelector('#new-department-pin');
 const credentialsForm = document.querySelector('#credentials-form');
 const credentialsNotice = document.querySelector('#credentials-notice');
 const adminUsernameInput = document.querySelector('#admin-username');
@@ -35,6 +38,8 @@ const showLogin = () => {
   loginSection.classList.remove('hidden');
   dashboard.classList.add('hidden');
 };
+
+const isValidPin = (value) => /^\d{4}$/.test(value);
 
 const renderStats = async () => {
   const records = await getRecords();
@@ -111,9 +116,11 @@ const renderStats = async () => {
 
   departmentAdminList.innerHTML = '';
   departments.forEach((department) => {
+    const pinLabel = department.pin ? '••••' : '—';
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${department.name}</td>
+      <td>${pinLabel}</td>
       <td class="actions">
         <button class="ghost" data-action="edit-department" data-id="${department.id}">
           Редактировать
@@ -214,6 +221,21 @@ logoutBtn.addEventListener('click', () => {
   showLogin();
 });
 
+addDepartmentForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const name = newDepartmentNameInput.value.trim();
+  const pin = newDepartmentPinInput.value.trim();
+  if (!name || !pin) return;
+  if (!isValidPin(pin)) {
+    alert('PIN-код должен состоять из 4 цифр.');
+    return;
+  }
+  await addDepartment(name, pin);
+  newDepartmentNameInput.value = '';
+  newDepartmentPinInput.value = '';
+  await renderStats();
+});
+
 credentialsForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const username = adminUsernameInput.value.trim();
@@ -238,7 +260,12 @@ departmentAdminList.addEventListener('click', async (event) => {
     if (!department) return;
     const name = window.prompt('Новое название подразделения', department.name);
     if (!name) return;
-    await updateDepartment(departmentId, { name: name.trim() });
+    const pin = window.prompt('Новый PIN-код (4 цифры)', department.pin || '');
+    if (!pin || !isValidPin(pin)) {
+      alert('PIN-код должен состоять из 4 цифр.');
+      return;
+    }
+    await updateDepartment(departmentId, { name: name.trim(), pin });
     await renderStats();
   }
 

@@ -15,7 +15,17 @@
   </header>
 
   <main class="container">
-    <section class="card">
+    <section id="pin-section" class="card">
+      <h2>Авторизация подразделения</h2>
+      <p>Введите 4‑значный PIN‑код, установленный администратором.</p>
+      <form id="pin-form" class="actions">
+        <input id="pin-input" type="password" inputmode="numeric" maxlength="4" required />
+        <button type="submit">Войти</button>
+      </form>
+      <div id="pin-notice" class="notice hidden"></div>
+    </section>
+
+    <section id="form-section" class="card hidden">
       <h2>Форма клиента</h2>
       <form id="queue-form" class="grid columns-2">
         <div>
@@ -67,7 +77,7 @@
       <div id="form-notice" class="notice hidden"></div>
     </section>
 
-    <section class="card">
+    <section id="recent-section" class="card hidden">
       <h2>Последние записи</h2>
       <div class="notice">История хранится локально в браузере устройства.</div>
       <div class="table-wrapper">
