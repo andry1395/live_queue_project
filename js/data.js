@@ -35,32 +35,75 @@ const fetchJson = async (url, options = {}, retryUrl = null) => {
   }
 };
 
-const sendRequest = async (payload, options = {}) => {
-  const formBody = new URLSearchParams();
-  Object.entries(payload).forEach(([key, value]) => {
-    formBody.append(key, typeof value === 'string' ? value : JSON.stringify(value));
-  });
-
-  return fetchJson(
+const sendRequest = async (payload, options = {}) =>
+  fetchJson(
     API_URL,
     {
       method: 'POST',
-      body: formBody,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
       ...options,
     },
     API_URL_FALLBACK
   );
+
+const slugify = (value) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '');
+
+const mapRowToRecord = (row) => {
+  const rawDepartment = row.point || row.department || row.departmentName || '';
+  const departmentName = String(rawDepartment || '').trim() || '—';
+  const departmentId = slugify(departmentName) || `dept-${Math.random().toString(36).slice(2, 8)}`;
+  const visitDate =
+    row.visitDate ||
+    row.date ||
+    row['Дата'] ||
+    row['Дата визита'] ||
+    row.timestamp ||
+    row['Timestamp'] ||
+    row.time ||
+    row['Time'] ||
+    row.createdAt ||
+    row.created_at ||
+    row['created_at'] ||
+    '';
+
+  return {
+    id: row.id || row.uuid || row.recordId || crypto.randomUUID(),
+    departmentId,
+    departmentName,
+    visitDate,
+    client: row.client_name || row.client || row['Клиент'] || '',
+    visitPurpose: row.purpose || row.visitPurpose || row['Цель визита'] || '',
+    serviceStatus: row.status || row.serviceStatus || row['Статус обслуживания'] || '',
+    notServedReason: row.refuse_reason || row.notServedReason || row['Причина отказа'] || '',
+    comment: row.comment || row['Комментарий'] || '',
+    car: row.car || '',
+    phone: row.phone || '',
+    mechanic: row.mechanic || '',
+    createdAt: visitDate,
+  };
 };
 
 const getDepartments = async () => {
   try {
-    const data = await fetchJson(
-      `${API_URL}?action=departments`,
-      {},
-      `${API_URL_FALLBACK}?action=departments`
-    );
-    if (!Array.isArray(data.departments)) return [...DEFAULT_DEPARTMENTS];
-    return data.departments;
+    const data = await fetchJson(API_URL, {}, API_URL_FALLBACK);
+    if (!Array.isArray(data.rows)) return [...DEFAULT_DEPARTMENTS];
+    const departmentNames = data.rows
+      .map((row) => String(row.point || row.department || row.departmentName || '').trim())
+      .filter(Boolean);
+    const uniqueNames = Array.from(new Set(departmentNames));
+    const derivedDepartments = uniqueNames.map((name) => ({ id: slugify(name), name }));
+    const merged = [...DEFAULT_DEPARTMENTS];
+    derivedDepartments.forEach((department) => {
+      if (!merged.some((item) => item.id === department.id)) {
+        merged.push(department);
+      }
+    });
+    return merged;
   } catch (error) {
     console.warn('Не удалось получить подразделения из API.', error);
     return [...DEFAULT_DEPARTMENTS];
@@ -70,18 +113,14 @@ const getDepartments = async () => {
 const addDepartment = async (name) => {
   const trimmed = name.trim();
   if (!trimmed) return null;
-  const result = await sendRequest({ action: 'addDepartment', name: trimmed });
-  return result.department ?? null;
+  return { id: slugify(trimmed), name: trimmed };
 };
 
 const getRecords = async () => {
   try {
-    const data = await fetchJson(
-      `${API_URL}?action=records`,
-      {},
-      `${API_URL_FALLBACK}?action=records`
-    );
-    return Array.isArray(data.records) ? data.records : [];
+    const data = await fetchJson(API_URL, {}, API_URL_FALLBACK);
+    if (!Array.isArray(data.rows)) return [];
+    return data.rows.map(mapRowToRecord);
   } catch (error) {
     console.warn('Не удалось получить записи из API.', error);
     return [];
@@ -89,8 +128,22 @@ const getRecords = async () => {
 };
 
 const saveRecord = async (record) => {
-  const result = await sendRequest({ action: 'addRecord', record });
-  return result.record ?? null;
+  const payload = {
+    point: record.departmentName || '',
+    mechanic: record.mechanic || '',
+    client_name: record.client || '',
+    car: record.car || '',
+    phone: record.phone || '',
+    purpose: record.visitPurpose || '',
+    status: record.serviceStatus || '',
+    refuse_reason: record.notServedReason || '',
+    comment: record.comment || '',
+  };
+  const result = await sendRequest(payload);
+  if (!result.ok) {
+    throw new Error(result.error || 'Не удалось сохранить запись.');
+  }
+  return result;
 };
 
 const formatDateTime = (value) => {
