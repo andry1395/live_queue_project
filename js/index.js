@@ -2,9 +2,9 @@ const departmentList = document.querySelector('#department-list');
 const addDepartmentForm = document.querySelector('#add-department-form');
 const newDepartmentInput = document.querySelector('#new-department-name');
 
-const renderDepartments = () => {
+const renderDepartments = async () => {
   departmentList.innerHTML = '';
-  const departments = getDepartments();
+  const departments = await getDepartments();
 
   departments.forEach((department) => {
     const wrapper = document.createElement('div');
@@ -18,17 +18,17 @@ const renderDepartments = () => {
   });
 };
 
-addDepartmentForm.addEventListener('submit', (event) => {
+addDepartmentForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const name = newDepartmentInput.value.trim();
   if (!name) return;
-  const newDepartment = addDepartment(name);
+  const newDepartment = await addDepartment(name);
   if (!newDepartment) {
     alert('Не удалось добавить подразделение.');
     return;
   }
   newDepartmentInput.value = '';
-  renderDepartments();
+  await renderDepartments();
 });
 
 renderDepartments();

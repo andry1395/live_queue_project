@@ -16,10 +16,10 @@ const setAuthenticated = (value) => {
   sessionStorage.setItem(SESSION_KEY, value ? 'true' : 'false');
 };
 
-const showDashboard = () => {
+const showDashboard = async () => {
   loginSection.classList.add('hidden');
   dashboard.classList.remove('hidden');
-  renderStats();
+  await renderStats();
 };
 
 const showLogin = () => {
@@ -27,8 +27,8 @@ const showLogin = () => {
   dashboard.classList.add('hidden');
 };
 
-const renderStats = () => {
-  const records = getRecords();
+const renderStats = async () => {
+  const records = await getRecords();
 
   const total = records.length;
   const served = records.filter((record) => record.serviceStatus === 'Обслужен').length;
@@ -53,7 +53,8 @@ const renderStats = () => {
   });
 
   departmentStatsBody.innerHTML = '';
-  getDepartments().forEach((department) => {
+  const departments = await getDepartments();
+  departments.forEach((department) => {
     const departmentRecords = records.filter(
       (record) => record.departmentId === department.id
     );
@@ -100,8 +101,8 @@ const renderStats = () => {
   }
 };
 
-const exportToCsv = () => {
-  const records = getRecords();
+const exportToCsv = async () => {
+  const records = await getRecords();
   if (records.length === 0) {
     alert('Пока нет данных для экспорта.');
     return;
@@ -139,7 +140,7 @@ const exportToCsv = () => {
   downloadFile(filename, csvContent, 'text/csv;charset=utf-8;');
 };
 
-loginForm.addEventListener('submit', (event) => {
+loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const username = loginForm.querySelector('#username').value.trim();
@@ -148,7 +149,7 @@ loginForm.addEventListener('submit', (event) => {
   if (username === LOGIN_CREDENTIALS.username && password === LOGIN_CREDENTIALS.password) {
     setAuthenticated(true);
     loginNotice.classList.add('hidden');
-    showDashboard();
+    await showDashboard();
   } else {
     loginNotice.textContent = 'Неверный логин или пароль.';
     loginNotice.classList.remove('hidden');

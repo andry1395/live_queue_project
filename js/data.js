@@ -8,13 +8,23 @@ const DEFAULT_DEPARTMENTS = [
 
 const STORAGE_KEY = 'liveQueueRecords';
 const DEPARTMENTS_KEY = 'liveQueueDepartments';
+const RECORDS_COLLECTION = 'records';
+const DEPARTMENTS_COLLECTION = 'departments';
 
 const LOGIN_CREDENTIALS = {
   username: 'admin',
   password: 'admin123',
 };
 
-const getDepartments = () => {
+const hasRemoteDb = () => Boolean(window.firebaseDb);
+
+const getDepartments = async () => {
+  if (hasRemoteDb()) {
+    const snapshot = await window.firebaseDb.collection(DEPARTMENTS_COLLECTION).get();
+    const departments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    if (departments.length > 0) return departments;
+  }
+
   const raw = localStorage.getItem(DEPARTMENTS_KEY);
   if (!raw) return [...DEFAULT_DEPARTMENTS];
   try {
@@ -31,7 +41,7 @@ const saveCustomDepartments = (departments) => {
   localStorage.setItem(DEPARTMENTS_KEY, JSON.stringify(departments));
 };
 
-const addDepartment = (name) => {
+const addDepartment = async (name) => {
   const trimmed = name.trim();
   if (!trimmed) return null;
   const slug = trimmed
@@ -40,7 +50,13 @@ const addDepartment = (name) => {
     .replace(/(^-|-$)/g, '');
   const id = `${slug}-${Date.now()}`;
   const newDepartment = { id, name: trimmed };
-  const existingCustom = getDepartments().filter(
+
+  if (hasRemoteDb()) {
+    await window.firebaseDb.collection(DEPARTMENTS_COLLECTION).doc(id).set(newDepartment);
+    return newDepartment;
+  }
+
+  const existingCustom = (await getDepartments()).filter(
     (department) => !DEFAULT_DEPARTMENTS.some((item) => item.id === department.id)
   );
   existingCustom.push(newDepartment);
@@ -48,7 +64,15 @@ const addDepartment = (name) => {
   return newDepartment;
 };
 
-const getRecords = () => {
+const getRecords = async () => {
+  if (hasRemoteDb()) {
+    const snapshot = await window.firebaseDb
+      .collection(RECORDS_COLLECTION)
+      .orderBy('createdAt', 'desc')
+      .get();
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  }
+
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
@@ -59,8 +83,13 @@ const getRecords = () => {
   }
 };
 
-const saveRecord = (record) => {
-  const records = getRecords();
+const saveRecord = async (record) => {
+  if (hasRemoteDb()) {
+    await window.firebaseDb.collection(RECORDS_COLLECTION).add(record);
+    return;
+  }
+
+  const records = await getRecords();
   records.push(record);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 };

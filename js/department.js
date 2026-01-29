@@ -40,8 +40,8 @@ const updateReasonVisibility = () => {
 serviceStatusInput.addEventListener('change', updateReasonVisibility);
 reasonInput.addEventListener('change', updateReasonVisibility);
 
-const renderRecentEntries = () => {
-  const records = getRecords()
+const renderRecentEntries = async () => {
+  const records = (await getRecords())
     .filter((record) => record.departmentId === departmentId)
     .slice(-5)
     .reverse();
@@ -74,7 +74,7 @@ const showNotice = (message, type = 'success') => {
   formNotice.classList.add(type === 'warning' ? 'warning' : 'success');
 };
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   if (!department) return;
@@ -92,15 +92,15 @@ form.addEventListener('submit', (event) => {
     createdAt: new Date().toISOString(),
   };
 
-  saveRecord(record);
+  await saveRecord(record);
   form.reset();
   updateReasonVisibility();
-  renderRecentEntries();
+  await renderRecentEntries();
   showNotice('Запись сохранена. Спасибо!');
 });
 
-const init = () => {
-  const departments = getDepartments();
+const init = async () => {
+  const departments = await getDepartments();
   department = departments.find((item) => item.id === departmentId);
 
   if (!department) {
@@ -114,7 +114,7 @@ const init = () => {
   departmentTitle.textContent = department.name;
   visitDateInput.value = new Date().toISOString().slice(0, 16);
   updateReasonVisibility();
-  renderRecentEntries();
+  await renderRecentEntries();
 };
 
 init();
