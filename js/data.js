@@ -7,11 +7,32 @@ const DEFAULT_DEPARTMENTS = [
 ];
 
 const API_URL =
+  'https://script.googleusercontent.com/macros/s/AKfycbxlKIXiqDsL2dx-Kq7gsMZPvDMZv_b_N8POfNP-l88u8s8XMWUo1sKhn7fi6VS_sUZg/exec';
+const API_URL_FALLBACK =
   'https://script.google.com/macros/s/AKfycbxlKIXiqDsL2dx-Kq7gsMZPvDMZv_b_N8POfNP-l88u8s8XMWUo1sKhn7fi6VS_sUZg/exec';
 
 const LOGIN_CREDENTIALS = {
   username: 'admin',
   password: 'admin123',
+};
+
+const fetchJson = async (url, options = {}, retryUrl = null) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if (retryUrl) {
+      const response = await fetch(retryUrl, options);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    }
+    throw error;
+  }
 };
 
 const sendRequest = async (payload, options = {}) => {
@@ -20,22 +41,24 @@ const sendRequest = async (payload, options = {}) => {
     formBody.append(key, typeof value === 'string' ? value : JSON.stringify(value));
   });
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    body: formBody,
-    ...options,
-  });
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-  return response.json();
+  return fetchJson(
+    API_URL,
+    {
+      method: 'POST',
+      body: formBody,
+      ...options,
+    },
+    API_URL_FALLBACK
+  );
 };
 
 const getDepartments = async () => {
   try {
-    const response = await fetch(`${API_URL}?action=departments`);
-    if (!response.ok) throw new Error('Не удалось получить подразделения.');
-    const data = await response.json();
+    const data = await fetchJson(
+      `${API_URL}?action=departments`,
+      {},
+      `${API_URL_FALLBACK}?action=departments`
+    );
     if (!Array.isArray(data.departments)) return [...DEFAULT_DEPARTMENTS];
     return data.departments;
   } catch (error) {
@@ -53,9 +76,11 @@ const addDepartment = async (name) => {
 
 const getRecords = async () => {
   try {
-    const response = await fetch(`${API_URL}?action=records`);
-    if (!response.ok) throw new Error('Не удалось получить записи.');
-    const data = await response.json();
+    const data = await fetchJson(
+      `${API_URL}?action=records`,
+      {},
+      `${API_URL_FALLBACK}?action=records`
+    );
     return Array.isArray(data.records) ? data.records : [];
   } catch (error) {
     console.warn('Не удалось получить записи из API.', error);
