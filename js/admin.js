@@ -53,7 +53,7 @@ const renderStats = () => {
   });
 
   departmentStatsBody.innerHTML = '';
-  DEPARTMENTS.forEach((department) => {
+  getDepartments().forEach((department) => {
     const departmentRecords = records.filter(
       (record) => record.departmentId === department.id
     );

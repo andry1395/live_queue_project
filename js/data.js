@@ -1,16 +1,51 @@
-const DEPARTMENTS = [
-  { id: 'branch-1', name: 'Мневники' },
-  { id: 'branch-2', name: 'Куркино' },
-  { id: 'branch-3', name: 'Прошлякова' },
-  { id: 'branch-4', name: 'Кирова' },
-  { id: 'branch-5', name: 'Солнцево' },
+const DEFAULT_DEPARTMENTS = [
+  { id: 'mnevniki', name: 'Мнёвники' },
+  { id: 'proshlyakova', name: 'Прошлякова' },
+  { id: 'kurkino', name: 'Куркино' },
+  { id: 'kirova', name: 'Кирова' },
+  { id: 'solntsevo', name: 'Солнцево' },
 ];
 
 const STORAGE_KEY = 'liveQueueRecords';
+const DEPARTMENTS_KEY = 'liveQueueDepartments';
 
 const LOGIN_CREDENTIALS = {
   username: 'admin',
   password: 'admin123',
+};
+
+const getDepartments = () => {
+  const raw = localStorage.getItem(DEPARTMENTS_KEY);
+  if (!raw) return [...DEFAULT_DEPARTMENTS];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [...DEFAULT_DEPARTMENTS];
+    return [...DEFAULT_DEPARTMENTS, ...parsed];
+  } catch (error) {
+    console.warn('Не удалось прочитать список подразделений.', error);
+    return [...DEFAULT_DEPARTMENTS];
+  }
+};
+
+const saveCustomDepartments = (departments) => {
+  localStorage.setItem(DEPARTMENTS_KEY, JSON.stringify(departments));
+};
+
+const addDepartment = (name) => {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const slug = trimmed
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '');
+  const id = `${slug}-${Date.now()}`;
+  const newDepartment = { id, name: trimmed };
+  const existingCustom = getDepartments().filter(
+    (department) => !DEFAULT_DEPARTMENTS.some((item) => item.id === department.id)
+  );
+  existingCustom.push(newDepartment);
+  saveCustomDepartments(existingCustom);
+  return newDepartment;
 };
 
 const getRecords = () => {

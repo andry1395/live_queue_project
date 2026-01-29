@@ -13,7 +13,7 @@ const recentEntries = document.querySelector('#recent-entries');
 
 const params = new URLSearchParams(window.location.search);
 const departmentId = params.get('dept');
-const department = DEPARTMENTS.find((item) => item.id === departmentId);
+const department = getDepartments().find((item) => item.id === departmentId);
 
 if (!department) {
   departmentTitle.textContent = 'Подразделение не найдено';
