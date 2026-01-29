@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Форма подразделения — живая очередь</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1 id="department-title">Подразделение</h1>
+      <p>Заполняйте информацию о каждом клиенте, который приехал в живую очередь.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Форма клиента</h2>
+      <form id="queue-form" class="grid columns-2">
+        <div>
+          <label for="visit-date">Дата визита</label>
+          <input id="visit-date" type="datetime-local" required />
+        </div>
+        <div>
+          <label for="client">Клиент</label>
+          <input id="client" type="text" placeholder="Имя / авто / телефон" required />
+        </div>
+        <div>
+          <label for="visit-purpose">Цель визита</label>
+          <select id="visit-purpose" required>
+            <option value="">Выберите цель</option>
+            <option value="Замена масла">Замена масла</option>
+            <option value="Консультация">Консультация</option>
+            <option value="Запись на сервис">Запись на сервис</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+        <div>
+          <label for="service-status">Статус обслуживания</label>
+          <select id="service-status" required>
+            <option value="">Выберите статус</option>
+            <option value="Обслужен">Обслужен</option>
+            <option value="Не обслужен">Не обслужен</option>
+          </select>
+        </div>
+        <div id="reason-wrapper" class="hidden">
+          <label for="not-served-reason">Причина отказа</label>
+          <select id="not-served-reason">
+            <option value="">Выберите причину</option>
+            <option value="Нет свободных слотов">Нет свободных слотов</option>
+            <option value="Нет расходных материалов">Нет расходных материалов</option>
+            <option value="Клиент приехал на консультацию">Клиент приехал на консультацию</option>
+            <option value="Клиент приехал записаться">Клиент приехал записаться</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+        <div id="comment-wrapper" class="hidden">
+          <label for="comment">Комментарий</label>
+          <textarea id="comment" placeholder="Уточните причину"></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit">Сохранить запись</button>
+          <a class="button-link ghost" href="index.html">Назад к списку</a>
+        </div>
+      </form>
+      <div id="form-notice" class="notice hidden"></div>
+    </section>
+
+    <section class="card">
+      <h2>Последние записи</h2>
+      <div class="notice">История хранится локально в браузере устройства.</div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Клиент</th>
+              <th>Цель</th>
+              <th>Статус</th>
+              <th>Причина</th>
+            </tr>
+          </thead>
+          <tbody id="recent-entries"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>Если нужного варианта нет, используйте комментарий.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/department.js"></script>
+</body>
+</html>
