@@ -5,6 +5,12 @@ const dashboard = document.querySelector('#dashboard');
 const statsContainer = document.querySelector('#stats');
 const departmentStatsBody = document.querySelector('#department-stats');
 const reasonStatsBody = document.querySelector('#reason-stats');
+const departmentAdminList = document.querySelector('#department-admin-list');
+const recordAdminList = document.querySelector('#record-admin-list');
+const credentialsForm = document.querySelector('#credentials-form');
+const credentialsNotice = document.querySelector('#credentials-notice');
+const adminUsernameInput = document.querySelector('#admin-username');
+const adminPasswordInput = document.querySelector('#admin-password');
 const exportBtn = document.querySelector('#export-btn');
 const logoutBtn = document.querySelector('#logout-btn');
 
@@ -19,6 +25,9 @@ const setAuthenticated = (value) => {
 const showDashboard = async () => {
   loginSection.classList.add('hidden');
   dashboard.classList.remove('hidden');
+  const credentials = await getAdminCredentials();
+  adminUsernameInput.value = credentials.username;
+  adminPasswordInput.value = credentials.password;
   await renderStats();
 };
 
@@ -29,6 +38,7 @@ const showLogin = () => {
 
 const renderStats = async () => {
   const records = await getRecords();
+  const departments = await getDepartments();
 
   const total = records.length;
   const served = records.filter((record) => record.serviceStatus === 'Обслужен').length;
@@ -53,7 +63,6 @@ const renderStats = async () => {
   });
 
   departmentStatsBody.innerHTML = '';
-  const departments = await getDepartments();
   departments.forEach((department) => {
     const departmentRecords = records.filter(
       (record) => record.departmentId === department.id
@@ -99,6 +108,43 @@ const renderStats = async () => {
       reasonStatsBody.appendChild(row);
     });
   }
+
+  departmentAdminList.innerHTML = '';
+  departments.forEach((department) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${department.name}</td>
+      <td class="actions">
+        <button class="ghost" data-action="edit-department" data-id="${department.id}">
+          Редактировать
+        </button>
+        <button class="ghost" data-action="delete-department" data-id="${department.id}">
+          Удалить
+        </button>
+      </td>
+    `;
+    departmentAdminList.appendChild(row);
+  });
+
+  recordAdminList.innerHTML = '';
+  records.forEach((record) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${formatDateTime(record.visitDate)}</td>
+      <td>${record.client}</td>
+      <td>${record.departmentName}</td>
+      <td>${record.serviceStatus}</td>
+      <td class="actions">
+        <button class="ghost" data-action="edit-record" data-id="${record.id}">
+          Редактировать
+        </button>
+        <button class="ghost" data-action="delete-record" data-id="${record.id}">
+          Удалить
+        </button>
+      </td>
+    `;
+    recordAdminList.appendChild(row);
+  });
 };
 
 const exportToCsv = async () => {
@@ -145,8 +191,9 @@ loginForm.addEventListener('submit', async (event) => {
 
   const username = loginForm.querySelector('#username').value.trim();
   const password = loginForm.querySelector('#password').value.trim();
+  const credentials = await getAdminCredentials();
 
-  if (username === LOGIN_CREDENTIALS.username && password === LOGIN_CREDENTIALS.password) {
+  if (username === credentials.username && password === credentials.password) {
     setAuthenticated(true);
     loginNotice.classList.add('hidden');
     await showDashboard();
@@ -160,6 +207,70 @@ exportBtn.addEventListener('click', exportToCsv);
 logoutBtn.addEventListener('click', () => {
   setAuthenticated(false);
   showLogin();
+});
+
+credentialsForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const username = adminUsernameInput.value.trim();
+  const password = adminPasswordInput.value.trim();
+  if (!username || !password) return;
+
+  await saveAdminCredentials({ username, password });
+  credentialsNotice.textContent = 'Данные администратора обновлены.';
+  credentialsNotice.classList.remove('hidden');
+  credentialsNotice.classList.add('success');
+});
+
+departmentAdminList.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const action = button.dataset.action;
+  const departmentId = button.dataset.id;
+
+  if (action === 'edit-department') {
+    const current = await getDepartments();
+    const department = current.find((item) => item.id === departmentId);
+    if (!department) return;
+    const name = window.prompt('Новое название подразделения', department.name);
+    if (!name) return;
+    await updateDepartment(departmentId, { name: name.trim() });
+    await renderStats();
+  }
+
+  if (action === 'delete-department') {
+    const confirmed = window.confirm('Удалить подразделение?');
+    if (!confirmed) return;
+    await deleteDepartment(departmentId);
+    await renderStats();
+  }
+});
+
+recordAdminList.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const action = button.dataset.action;
+  const recordId = button.dataset.id;
+
+  if (action === 'edit-record') {
+    const records = await getRecords();
+    const record = records.find((item) => item.id === recordId);
+    if (!record) return;
+    const status = window.prompt('Статус обслуживания', record.serviceStatus);
+    if (!status) return;
+    const reason = window.prompt('Причина отказа', record.notServedReason || '');
+    await updateRecord(recordId, {
+      serviceStatus: status.trim(),
+      notServedReason: reason ? reason.trim() : '',
+    });
+    await renderStats();
+  }
+
+  if (action === 'delete-record') {
+    const confirmed = window.confirm('Удалить запись?');
+    if (!confirmed) return;
+    await deleteRecord(recordId);
+    await renderStats();
+  }
 });
 
 if (isAuthenticated()) {
