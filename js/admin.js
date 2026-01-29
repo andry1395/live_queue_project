@@ -16,10 +16,10 @@ const setAuthenticated = (value) => {
   sessionStorage.setItem(SESSION_KEY, value ? 'true' : 'false');
 };
 
-const showDashboard = async () => {
+const showDashboard = () => {
   loginSection.classList.add('hidden');
   dashboard.classList.remove('hidden');
-  await renderStats();
+  renderStats();
 };
 
 const showLogin = () => {
@@ -27,9 +27,8 @@ const showLogin = () => {
   dashboard.classList.add('hidden');
 };
 
-const renderStats = async () => {
-  statsContainer.innerHTML = '<div class="notice">Загружаем метрики...</div>';
-  const records = await getRecords();
+const renderStats = () => {
+  const records = getRecords();
 
   const total = records.length;
   const served = records.filter((record) => record.serviceStatus === 'Обслужен').length;
@@ -54,8 +53,7 @@ const renderStats = async () => {
   });
 
   departmentStatsBody.innerHTML = '';
-  const departments = await getDepartments();
-  departments.forEach((department) => {
+  getDepartments().forEach((department) => {
     const departmentRecords = records.filter(
       (record) => record.departmentId === department.id
     );
@@ -102,8 +100,8 @@ const renderStats = async () => {
   }
 };
 
-const exportToCsv = async () => {
-  const records = await getRecords();
+const exportToCsv = () => {
+  const records = getRecords();
   if (records.length === 0) {
     alert('Пока нет данных для экспорта.');
     return;
@@ -141,7 +139,7 @@ const exportToCsv = async () => {
   downloadFile(filename, csvContent, 'text/csv;charset=utf-8;');
 };
 
-loginForm.addEventListener('submit', async (event) => {
+loginForm.addEventListener('submit', (event) => {
   event.preventDefault();
 
   const username = loginForm.querySelector('#username').value.trim();
@@ -150,7 +148,7 @@ loginForm.addEventListener('submit', async (event) => {
   if (username === LOGIN_CREDENTIALS.username && password === LOGIN_CREDENTIALS.password) {
     setAuthenticated(true);
     loginNotice.classList.add('hidden');
-    await showDashboard();
+    showDashboard();
   } else {
     loginNotice.textContent = 'Неверный логин или пароль.';
     loginNotice.classList.remove('hidden');

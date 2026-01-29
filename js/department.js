@@ -40,9 +40,8 @@ const updateReasonVisibility = () => {
 serviceStatusInput.addEventListener('change', updateReasonVisibility);
 reasonInput.addEventListener('change', updateReasonVisibility);
 
-const renderRecentEntries = async () => {
-  recentEntries.innerHTML = '<tr><td colspan="5">Загрузка...</td></tr>';
-  const records = (await getRecords())
+const renderRecentEntries = () => {
+  const records = getRecords()
     .filter((record) => record.departmentId === departmentId)
     .slice(-5)
     .reverse();
@@ -75,7 +74,7 @@ const showNotice = (message, type = 'success') => {
   formNotice.classList.add(type === 'warning' ? 'warning' : 'success');
 };
 
-form.addEventListener('submit', async (event) => {
+form.addEventListener('submit', (event) => {
   event.preventDefault();
 
   if (!department) return;
@@ -93,20 +92,15 @@ form.addEventListener('submit', async (event) => {
     createdAt: new Date().toISOString(),
   };
 
-  try {
-    await saveRecord(record);
-    form.reset();
-    updateReasonVisibility();
-    await renderRecentEntries();
-    showNotice('Запись сохранена. Спасибо!');
-  } catch (error) {
-    console.error(error);
-    showNotice('Не удалось сохранить запись. Проверьте соединение.', 'warning');
-  }
+  saveRecord(record);
+  form.reset();
+  updateReasonVisibility();
+  renderRecentEntries();
+  showNotice('Запись сохранена. Спасибо!');
 });
 
-const init = async () => {
-  const departments = await getDepartments();
+const init = () => {
+  const departments = getDepartments();
   department = departments.find((item) => item.id === departmentId);
 
   if (!department) {
@@ -120,7 +114,7 @@ const init = async () => {
   departmentTitle.textContent = department.name;
   visitDateInput.value = new Date().toISOString().slice(0, 16);
   updateReasonVisibility();
-  await renderRecentEntries();
+  renderRecentEntries();
 };
 
 init();

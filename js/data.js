@@ -6,144 +6,63 @@ const DEFAULT_DEPARTMENTS = [
   { id: 'solntsevo', name: 'Солнцево' },
 ];
 
-const API_URL =
-  'https://script.googleusercontent.com/macros/s/AKfycbxlKIXiqDsL2dx-Kq7gsMZPvDMZv_b_N8POfNP-l88u8s8XMWUo1sKhn7fi6VS_sUZg/exec';
-const API_URL_FALLBACK =
-  'https://script.google.com/macros/s/AKfycbxlKIXiqDsL2dx-Kq7gsMZPvDMZv_b_N8POfNP-l88u8s8XMWUo1sKhn7fi6VS_sUZg/exec';
+const STORAGE_KEY = 'liveQueueRecords';
+const DEPARTMENTS_KEY = 'liveQueueDepartments';
 
 const LOGIN_CREDENTIALS = {
   username: 'admin',
   password: 'admin123',
 };
 
-const fetchJson = async (url, options = {}, retryUrl = null) => {
+const getDepartments = () => {
+  const raw = localStorage.getItem(DEPARTMENTS_KEY);
+  if (!raw) return [...DEFAULT_DEPARTMENTS];
   try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-    return await response.json();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [...DEFAULT_DEPARTMENTS];
+    return [...DEFAULT_DEPARTMENTS, ...parsed];
   } catch (error) {
-    if (retryUrl) {
-      const response = await fetch(retryUrl, options);
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      return response.json();
-    }
-    throw error;
-  }
-};
-
-const sendRequest = async (payload, options = {}) =>
-  fetchJson(
-    API_URL,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      ...options,
-    },
-    API_URL_FALLBACK
-  );
-
-const slugify = (value) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-zа-яё0-9]+/gi, '-')
-    .replace(/(^-|-$)/g, '');
-
-const mapRowToRecord = (row) => {
-  const rawDepartment = row.point || row.department || row.departmentName || '';
-  const departmentName = String(rawDepartment || '').trim() || '—';
-  const departmentId = slugify(departmentName) || `dept-${Math.random().toString(36).slice(2, 8)}`;
-  const visitDate =
-    row.visitDate ||
-    row.date ||
-    row['Дата'] ||
-    row['Дата визита'] ||
-    row.timestamp ||
-    row['Timestamp'] ||
-    row.time ||
-    row['Time'] ||
-    row.createdAt ||
-    row.created_at ||
-    row['created_at'] ||
-    '';
-
-  return {
-    id: row.id || row.uuid || row.recordId || crypto.randomUUID(),
-    departmentId,
-    departmentName,
-    visitDate,
-    client: row.client_name || row.client || row['Клиент'] || '',
-    visitPurpose: row.purpose || row.visitPurpose || row['Цель визита'] || '',
-    serviceStatus: row.status || row.serviceStatus || row['Статус обслуживания'] || '',
-    notServedReason: row.refuse_reason || row.notServedReason || row['Причина отказа'] || '',
-    comment: row.comment || row['Комментарий'] || '',
-    car: row.car || '',
-    phone: row.phone || '',
-    mechanic: row.mechanic || '',
-    createdAt: visitDate,
-  };
-};
-
-const getDepartments = async () => {
-  try {
-    const data = await fetchJson(API_URL, {}, API_URL_FALLBACK);
-    if (!Array.isArray(data.rows)) return [...DEFAULT_DEPARTMENTS];
-    const departmentNames = data.rows
-      .map((row) => String(row.point || row.department || row.departmentName || '').trim())
-      .filter(Boolean);
-    const uniqueNames = Array.from(new Set(departmentNames));
-    const derivedDepartments = uniqueNames.map((name) => ({ id: slugify(name), name }));
-    const merged = [...DEFAULT_DEPARTMENTS];
-    derivedDepartments.forEach((department) => {
-      if (!merged.some((item) => item.id === department.id)) {
-        merged.push(department);
-      }
-    });
-    return merged;
-  } catch (error) {
-    console.warn('Не удалось получить подразделения из API.', error);
+    console.warn('Не удалось прочитать список подразделений.', error);
     return [...DEFAULT_DEPARTMENTS];
   }
 };
 
-const addDepartment = async (name) => {
-  const trimmed = name.trim();
-  if (!trimmed) return null;
-  return { id: slugify(trimmed), name: trimmed };
+const saveCustomDepartments = (departments) => {
+  localStorage.setItem(DEPARTMENTS_KEY, JSON.stringify(departments));
 };
 
-const getRecords = async () => {
+const addDepartment = (name) => {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const slug = trimmed
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '');
+  const id = `${slug}-${Date.now()}`;
+  const newDepartment = { id, name: trimmed };
+  const existingCustom = getDepartments().filter(
+    (department) => !DEFAULT_DEPARTMENTS.some((item) => item.id === department.id)
+  );
+  existingCustom.push(newDepartment);
+  saveCustomDepartments(existingCustom);
+  return newDepartment;
+};
+
+const getRecords = () => {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
   try {
-    const data = await fetchJson(API_URL, {}, API_URL_FALLBACK);
-    if (!Array.isArray(data.rows)) return [];
-    return data.rows.map(mapRowToRecord);
+    return JSON.parse(raw);
   } catch (error) {
-    console.warn('Не удалось получить записи из API.', error);
+    console.warn('Не удалось прочитать локальные данные.', error);
     return [];
   }
 };
 
-const saveRecord = async (record) => {
-  const payload = {
-    point: record.departmentName || '',
-    mechanic: record.mechanic || '',
-    client_name: record.client || '',
-    car: record.car || '',
-    phone: record.phone || '',
-    purpose: record.visitPurpose || '',
-    status: record.serviceStatus || '',
-    refuse_reason: record.notServedReason || '',
-    comment: record.comment || '',
-  };
-  const result = await sendRequest(payload);
-  if (!result.ok) {
-    throw new Error(result.error || 'Не удалось сохранить запись.');
-  }
-  return result;
+const saveRecord = (record) => {
+  const records = getRecords();
+  records.push(record);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 };
 
 const formatDateTime = (value) => {

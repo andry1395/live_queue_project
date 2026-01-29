@@ -2,15 +2,9 @@ const departmentList = document.querySelector('#department-list');
 const addDepartmentForm = document.querySelector('#add-department-form');
 const newDepartmentInput = document.querySelector('#new-department-name');
 
-const renderDepartments = async () => {
+const renderDepartments = () => {
   departmentList.innerHTML = '';
-  const loading = document.createElement('div');
-  loading.className = 'notice';
-  loading.textContent = 'Загружаем подразделения...';
-  departmentList.appendChild(loading);
-
-  const departments = await getDepartments();
-  departmentList.innerHTML = '';
+  const departments = getDepartments();
 
   departments.forEach((department) => {
     const wrapper = document.createElement('div');
@@ -24,22 +18,17 @@ const renderDepartments = async () => {
   });
 };
 
-addDepartmentForm.addEventListener('submit', async (event) => {
+addDepartmentForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const name = newDepartmentInput.value.trim();
   if (!name) return;
-  try {
-    const newDepartment = await addDepartment(name);
-    if (!newDepartment) {
-      alert('Не удалось добавить подразделение.');
-      return;
-    }
-    newDepartmentInput.value = '';
-    await renderDepartments();
-  } catch (error) {
-    console.error(error);
-    alert('Не удалось добавить подразделение. Проверьте соединение.');
+  const newDepartment = addDepartment(name);
+  if (!newDepartment) {
+    alert('Не удалось добавить подразделение.');
+    return;
   }
+  newDepartmentInput.value = '';
+  renderDepartments();
 });
 
 renderDepartments();
