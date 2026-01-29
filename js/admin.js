@@ -178,12 +178,17 @@ const exportToCsv = async () => {
     formatDateTime(record.createdAt),
   ]);
 
-  const csvContent = [headers, ...rows]
-    .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
-    .join('\n');
+  if (typeof XLSX === 'undefined') {
+    alert('Библиотека для экспорта XLSX не загружена.');
+    return;
+  }
 
-  const filename = `live-queue-export-${new Date().toISOString().slice(0, 10)}.csv`;
-  downloadFile(filename, csvContent, 'text/csv;charset=utf-8;');
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Записи');
+
+  const filename = `live-queue-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(workbook, filename);
 };
 
 loginForm.addEventListener('submit', async (event) => {
