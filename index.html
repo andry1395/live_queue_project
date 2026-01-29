@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Живая очередь — учет клиентов</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Живая очередь: учет клиентов замены масла</h1>
+      <p>Форма для механиков и панель администратора для контроля по подразделениям.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Выберите подразделение</h2>
+      <p>Каждое подразделение ведет собственную страницу учета. Заполняйте форму после каждого обращения клиента.</p>
+      <form id="add-department-form" class="actions" style="margin-bottom: 16px;">
+        <input id="new-department-name" type="text" placeholder="Новое подразделение" required />
+        <button id="add-department-btn" class="ghost" type="submit">Добавить подразделение</button>
+      </form>
+      <div id="department-list" class="grid columns-3"></div>
+    </section>
+
+    <section class="card">
+      <h2>Быстрый доступ к администрированию</h2>
+      <p>Администратор может просматривать метрики по всем подразделениям и выгружать данные в Excel.</p>
+      <a class="button-link" href="admin.html">Открыть панель администратора</a>
+    </section>
+
+    <section class="card">
+      <h2>Что собираем</h2>
+      <div class="grid columns-2">
+        <div>
+          <ul>
+            <li>Дата визита.</li>
+            <li>Данные клиента (имя / авто / телефон).</li>
+            <li>Цель визита.</li>
+            <li>Статус обслуживания.</li>
+          </ul>
+        </div>
+        <div>
+          <ul>
+            <li>Причина отказа в обслуживании.</li>
+            <li>Комментарий, если причина нестандартная.</li>
+            <li>История записей сохраняется локально (localStorage).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="notice">
+        В дальнейшем данные можно перенести в облачную БД — структура уже подготовлена под экспорт.
+      </div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>Версия для локального использования. Логин администратора по умолчанию: <strong>admin / admin123</strong>.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
