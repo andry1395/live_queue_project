@@ -16,10 +16,24 @@ const pinInput = document.querySelector('#pin-input');
 const pinNotice = document.querySelector('#pin-notice');
 const formSection = document.querySelector('#form-section');
 const recentSection = document.querySelector('#recent-section');
+const cancelEditButton = document.querySelector('#cancel-edit');
+const submitButton = form.querySelector('button[type="submit"]');
 
 const params = new URLSearchParams(window.location.search);
 const departmentId = params.get('dept');
 let department = null;
+let editingRecordId = null;
+let recentRecords = [];
+
+const setDefaultVisitDate = () => {
+  visitDateInput.value = new Date().toISOString().slice(0, 16);
+};
+
+const resetEditState = () => {
+  editingRecordId = null;
+  cancelEditButton.classList.add('hidden');
+  submitButton.textContent = 'Сохранить запись';
+};
 
 const updateReasonVisibility = () => {
   const status = serviceStatusInput.value;
@@ -51,12 +65,13 @@ const renderRecentEntries = async () => {
     .filter((record) => record.departmentId === departmentId)
     .slice(-5)
     .reverse();
+  recentRecords = records;
 
   recentEntries.innerHTML = '';
 
   if (records.length === 0) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="5">Пока нет записей.</td>';
+    row.innerHTML = '<td colspan="6">Пока нет записей.</td>';
     recentEntries.appendChild(row);
     return;
   }
@@ -69,6 +84,11 @@ const renderRecentEntries = async () => {
       <td>${record.visitPurpose}</td>
       <td>${record.serviceStatus}</td>
       <td>${record.notServedReason || '—'}</td>
+      <td>
+        <button class="ghost" type="button" data-action="edit-record" data-id="${record.id}">
+          Редактировать
+        </button>
+      </td>
     `;
     recentEntries.appendChild(row);
   });
@@ -97,8 +117,7 @@ form.addEventListener('submit', async (event) => {
 
   if (!department) return;
 
-  const record = {
-    id: crypto.randomUUID(),
+  const recordPayload = {
     departmentId,
     departmentName: department.name,
     visitDate: visitDateInput.value,
@@ -107,14 +126,61 @@ form.addEventListener('submit', async (event) => {
     serviceStatus: serviceStatusInput.value,
     notServedReason: reasonInput.value,
     comment: commentInput.value.trim(),
-    createdAt: new Date().toISOString(),
   };
 
-  await saveRecord(record);
+  if (editingRecordId) {
+    await updateRecord(editingRecordId, {
+      ...recordPayload,
+      updatedAt: new Date().toISOString(),
+    });
+    showNotice('Запись обновлена.', 'success');
+  } else {
+    const record = {
+      id: crypto.randomUUID(),
+      ...recordPayload,
+      createdAt: new Date().toISOString(),
+    };
+    await saveRecord(record);
+    showNotice('Запись сохранена. Спасибо!', 'success');
+  }
+
   form.reset();
   updateReasonVisibility();
+  setDefaultVisitDate();
+  resetEditState();
   await renderRecentEntries();
-  showNotice('Запись сохранена. Спасибо!');
+});
+
+cancelEditButton.addEventListener('click', () => {
+  form.reset();
+  updateReasonVisibility();
+  setDefaultVisitDate();
+  resetEditState();
+  showNotice('Редактирование отменено.', 'warning');
+});
+
+recentEntries.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action="edit-record"]');
+  if (!button) return;
+
+  const recordId = button.dataset.id;
+  let record = recentRecords.find((item) => item.id === recordId);
+  if (!record) {
+    record = (await getRecords()).find((item) => item.id === recordId);
+  }
+  if (!record) return;
+
+  editingRecordId = record.id;
+  visitDateInput.value = record.visitDate;
+  clientInput.value = record.client;
+  visitPurposeInput.value = record.visitPurpose;
+  serviceStatusInput.value = record.serviceStatus;
+  reasonInput.value = record.notServedReason || '';
+  commentInput.value = record.comment || '';
+  updateReasonVisibility();
+  submitButton.textContent = 'Обновить запись';
+  cancelEditButton.classList.remove('hidden');
+  showNotice('Редактирование записи. Внесите изменения и сохраните.', 'warning');
 });
 
 const init = async () => {
@@ -130,7 +196,7 @@ const init = async () => {
   }
 
   departmentTitle.textContent = department.name;
-  visitDateInput.value = new Date().toISOString().slice(0, 16);
+  setDefaultVisitDate();
   updateReasonVisibility();
 
   if (!department.pin) {
