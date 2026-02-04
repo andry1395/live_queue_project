@@ -63,7 +63,11 @@ reasonInput.addEventListener('change', updateReasonVisibility);
 const renderRecentEntries = async () => {
   const records = (await getRecords())
     .filter((record) => record.departmentId === departmentId)
-    .slice(-5)
+    .sort((first, second) => {
+      const firstDate = new Date(first.createdAt || first.visitDate || 0).getTime();
+      const secondDate = new Date(second.createdAt || second.visitDate || 0).getTime();
+      return firstDate - secondDate;
+    })
     .reverse();
   recentRecords = records;
 
