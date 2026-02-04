@@ -68,7 +68,6 @@ const renderRecentEntries = async () => {
       const secondDate = new Date(second.createdAt || second.visitDate || 0).getTime();
       return firstDate - secondDate;
     })
-    .slice(-5)
     .reverse();
   recentRecords = records;
 
