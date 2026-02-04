@@ -61,14 +61,9 @@ serviceStatusInput.addEventListener('change', updateReasonVisibility);
 reasonInput.addEventListener('change', updateReasonVisibility);
 
 const renderRecentEntries = async () => {
-  const records = (await getRecords())
-    .filter((record) => record.departmentId === departmentId)
-    .sort((first, second) => {
-      const firstDate = new Date(first.createdAt || first.visitDate || 0).getTime();
-      const secondDate = new Date(second.createdAt || second.visitDate || 0).getTime();
-      return firstDate - secondDate;
-    })
-    .reverse();
+  const records = (await getRecords()).filter(
+    (record) => record.departmentId === departmentId
+  );
   recentRecords = records;
 
   recentEntries.innerHTML = '';

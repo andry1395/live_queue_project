@@ -20,6 +20,13 @@ const SETTINGS_COLLECTION = 'settings';
 
 const hasRemoteDb = () => Boolean(window.firebaseDb);
 
+const sortRecordsByDate = (records) =>
+  [...records].sort((first, second) => {
+    const firstDate = new Date(first.createdAt || first.visitDate || 0).getTime();
+    const secondDate = new Date(second.createdAt || second.visitDate || 0).getTime();
+    return secondDate - firstDate;
+  });
+
 const getAdminCredentials = async () => {
   if (hasRemoteDb()) {
     const doc = await window.firebaseDb
@@ -101,17 +108,15 @@ const addDepartment = async (name, pin) => {
 
 const getRecords = async () => {
   if (hasRemoteDb()) {
-    const snapshot = await window.firebaseDb
-      .collection(RECORDS_COLLECTION)
-      .orderBy('createdAt', 'desc')
-      .get();
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await window.firebaseDb.collection(RECORDS_COLLECTION).get();
+    const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return sortRecordsByDate(records);
   }
 
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
-    return JSON.parse(raw);
+    return sortRecordsByDate(JSON.parse(raw));
   } catch (error) {
     console.warn('Не удалось прочитать локальные данные.', error);
     return [];
