@@ -35,6 +35,17 @@ const resetEditState = () => {
   submitButton.textContent = 'Сохранить запись';
 };
 
+const shouldRequireComment = () => {
+  const status = serviceStatusInput.value;
+  const purpose = visitPurposeInput.value;
+  const reason = reasonInput.value;
+
+  const isOtherNotServedReason = status === 'Не обслужен' && reason === 'Другое';
+  const isOtherVisitPurposeForServed = status === 'Обслужен' && purpose === 'Другое';
+
+  return isOtherNotServedReason || isOtherVisitPurposeForServed;
+};
+
 const updateReasonVisibility = () => {
   const status = serviceStatusInput.value;
   if (status === 'Не обслужен') {
@@ -46,8 +57,7 @@ const updateReasonVisibility = () => {
     reasonInput.value = '';
   }
 
-  const reasonValue = reasonInput.value;
-  if (status === 'Не обслужен' && reasonValue === 'Другое') {
+  if (shouldRequireComment()) {
     commentWrapper.classList.remove('hidden');
     commentInput.required = true;
   } else {
@@ -59,6 +69,7 @@ const updateReasonVisibility = () => {
 
 serviceStatusInput.addEventListener('change', updateReasonVisibility);
 reasonInput.addEventListener('change', updateReasonVisibility);
+visitPurposeInput.addEventListener('change', updateReasonVisibility);
 
 const renderRecentEntries = async () => {
   const records = (await getRecords()).filter(
